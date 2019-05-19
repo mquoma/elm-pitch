@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+</head>
+
+<body>
+<div id="elm"></div>
+<script src="shared.js"></script>
+<script src="sample.js"></script>
+<script src="elm.js"></script>
+<script>
+
+var audio = "toot.";
+
+var sample = new OscillatorSample();
+
+var app = Elm.Main.init({
+  node: document.getElementById('elm')
+});
+
+app.ports.audio.send(audio);
+app.ports.toot.subscribe(function(data) {
+  console.log(data);
+  sample.toggle();
+
+});
+
+</script>
+</body>
+</html>
