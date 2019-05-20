@@ -14,7 +14,7 @@ import Random
 port audio : (String -> msg) -> Sub msg
 
 
-port sendAudio : Int -> Cmd msg
+port toot : String -> Cmd msg
 
 
 port changeGain : Float -> Cmd msg
@@ -70,7 +70,7 @@ init _ =
 type Msg
     = GotText (Result Http.Error String)
     | ProcessAudio String
-    | SendAudio Int
+    | SendAudio String
     | ChangeGain Float
     | GenerateRandomNumber Int
     | UpdateRandomNumber TonePos Int
@@ -92,17 +92,13 @@ update msg model =
                 ]
             )
 
-        UpdateRandomNumber Left f ->
+        UpdateRandomNumber Left t ->
             case model of
                 Playing tonePair ->
-                    ( Playing (TonePair f tonePair.right)
-                    , SendAudio (f * 100)
-                    )
+                    ( Playing (TonePair t tonePair.right), Cmd.map SendAudio "a" )
 
                 _ ->
-                    ( Playing (TonePair f 1)
-                    , SendAudio (f * 100)
-                    )
+                    ( Playing (TonePair t 1), Cmd.none )
 
         UpdateRandomNumber Right t ->
             case model of
@@ -123,20 +119,11 @@ update msg model =
         ProcessAudio string ->
             ( Initial, Cmd.none )
 
-        SendAudio f ->
-            ( Initial, sendAudio f )
+        SendAudio t ->
+            ( Initial, toot t )
 
         ChangeGain v ->
             ( Initial, changeGain v )
-
-
-tonePosToString tonePos =
-    case tonePos of
-        Left ->
-            "left"
-
-        _ ->
-            "right"
 
 
 
@@ -157,8 +144,8 @@ subscriptions model =
 buttons : Html Msg
 buttons =
     Html.div []
-        [ Html.button [ onClick (SendAudio 3) ] [ text "tone 1" ]
-        , Html.button [ onClick (SendAudio 4) ] [ text "tone 2" ]
+        [ Html.button [ onClick (SendAudio "a") ] [ text "tone 1" ]
+        , Html.button [ onClick (SendAudio "b") ] [ text "tone 2" ]
         , Html.button [ onClick (ChangeGain 0.8) ] [ text "loud" ]
         , Html.button [ onClick (ChangeGain 0.1) ] [ text "soft" ]
         , Html.button [ onClick (GenerateRandomNumber 12) ] [ text "next" ]
