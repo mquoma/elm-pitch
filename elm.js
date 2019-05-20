@@ -2314,6 +2314,89 @@ function _Platform_mergeExportsDebug(moduleName, obj, exports)
 
 
 
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
+
+
+
+function _Time_now(millisToPosix)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(millisToPosix(Date.now())));
+	});
+}
+
+var _Time_setInterval = F2(function(interval, task)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
+		return function() { clearInterval(id); };
+	});
+});
+
+function _Time_here()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(
+			A2(elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
+		));
+	});
+}
+
+
+function _Time_getZoneName()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		try
+		{
+			var name = elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
+		}
+		catch (e)
+		{
+			var name = elm$time$Time$Offset(new Date().getTimezoneOffset());
+		}
+		callback(_Scheduler_succeed(name));
+	});
+}
+
+
+
 
 // HELPERS
 
@@ -4805,14 +4888,233 @@ var author$project$Main$subscriptions = function (model) {
 			]));
 };
 var author$project$Main$Failure = {$: 'Failure'};
+var author$project$Main$Left = {$: 'Left'};
+var author$project$Main$Playing = function (a) {
+	return {$: 'Playing', a: a};
+};
+var author$project$Main$Right = {$: 'Right'};
 var author$project$Main$Success = function (a) {
 	return {$: 'Success', a: a};
 };
+var author$project$Main$TonePair = F2(
+	function (left, right) {
+		return {left: left, right: right};
+	});
+var elm$json$Json$Encode$float = _Json_wrap;
+var author$project$Main$changeGain = _Platform_outgoingPort('changeGain', elm$json$Json$Encode$float);
+var author$project$Main$UpdateRandomNumber = F2(
+	function (a, b) {
+		return {$: 'UpdateRandomNumber', a: a, b: b};
+	});
+var elm$core$Basics$identity = function (x) {
+	return x;
+};
+var elm$random$Random$Generate = function (a) {
+	return {$: 'Generate', a: a};
+};
+var elm$core$Task$andThen = _Scheduler_andThen;
+var elm$core$Task$succeed = _Scheduler_succeed;
+var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var elm$random$Random$Seed = F2(
+	function (a, b) {
+		return {$: 'Seed', a: a, b: b};
+	});
+var elm$random$Random$next = function (_n0) {
+	var state0 = _n0.a;
+	var incr = _n0.b;
+	return A2(elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
+};
+var elm$random$Random$initialSeed = function (x) {
+	var _n0 = elm$random$Random$next(
+		A2(elm$random$Random$Seed, 0, 1013904223));
+	var state1 = _n0.a;
+	var incr = _n0.b;
+	var state2 = (state1 + x) >>> 0;
+	return elm$random$Random$next(
+		A2(elm$random$Random$Seed, state2, incr));
+};
+var elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var elm$time$Time$customZone = elm$time$Time$Zone;
+var elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var elm$time$Time$millisToPosix = elm$time$Time$Posix;
+var elm$time$Time$now = _Time_now(elm$time$Time$millisToPosix);
+var elm$time$Time$posixToMillis = function (_n0) {
+	var millis = _n0.a;
+	return millis;
+};
+var elm$random$Random$init = A2(
+	elm$core$Task$andThen,
+	function (time) {
+		return elm$core$Task$succeed(
+			elm$random$Random$initialSeed(
+				elm$time$Time$posixToMillis(time)));
+	},
+	elm$time$Time$now);
+var elm$core$Platform$sendToApp = _Platform_sendToApp;
+var elm$random$Random$step = F2(
+	function (_n0, seed) {
+		var generator = _n0.a;
+		return generator(seed);
+	});
+var elm$random$Random$onEffects = F3(
+	function (router, commands, seed) {
+		if (!commands.b) {
+			return elm$core$Task$succeed(seed);
+		} else {
+			var generator = commands.a.a;
+			var rest = commands.b;
+			var _n1 = A2(elm$random$Random$step, generator, seed);
+			var value = _n1.a;
+			var newSeed = _n1.b;
+			return A2(
+				elm$core$Task$andThen,
+				function (_n2) {
+					return A3(elm$random$Random$onEffects, router, rest, newSeed);
+				},
+				A2(elm$core$Platform$sendToApp, router, value));
+		}
+	});
+var elm$random$Random$onSelfMsg = F3(
+	function (_n0, _n1, seed) {
+		return elm$core$Task$succeed(seed);
+	});
+var elm$random$Random$Generator = function (a) {
+	return {$: 'Generator', a: a};
+};
+var elm$random$Random$map = F2(
+	function (func, _n0) {
+		var genA = _n0.a;
+		return elm$random$Random$Generator(
+			function (seed0) {
+				var _n1 = genA(seed0);
+				var a = _n1.a;
+				var seed1 = _n1.b;
+				return _Utils_Tuple2(
+					func(a),
+					seed1);
+			});
+	});
+var elm$random$Random$cmdMap = F2(
+	function (func, _n0) {
+		var generator = _n0.a;
+		return elm$random$Random$Generate(
+			A2(elm$random$Random$map, func, generator));
+	});
+_Platform_effectManagers['Random'] = _Platform_createManager(elm$random$Random$init, elm$random$Random$onEffects, elm$random$Random$onSelfMsg, elm$random$Random$cmdMap);
+var elm$random$Random$command = _Platform_leaf('Random');
+var elm$random$Random$generate = F2(
+	function (tagger, generator) {
+		return elm$random$Random$command(
+			elm$random$Random$Generate(
+				A2(elm$random$Random$map, tagger, generator)));
+	});
+var elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var elm$core$Bitwise$and = _Bitwise_and;
+var elm$core$Bitwise$xor = _Bitwise_xor;
+var elm$random$Random$peel = function (_n0) {
+	var state = _n0.a;
+	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
+	return ((word >>> 22) ^ word) >>> 0;
+};
+var elm$random$Random$int = F2(
+	function (a, b) {
+		return elm$random$Random$Generator(
+			function (seed0) {
+				var _n0 = (_Utils_cmp(a, b) < 0) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
+				var lo = _n0.a;
+				var hi = _n0.b;
+				var range = (hi - lo) + 1;
+				if (!((range - 1) & range)) {
+					return _Utils_Tuple2(
+						(((range - 1) & elm$random$Random$peel(seed0)) >>> 0) + lo,
+						elm$random$Random$next(seed0));
+				} else {
+					var threshhold = (((-range) >>> 0) % range) >>> 0;
+					var accountForBias = function (seed) {
+						accountForBias:
+						while (true) {
+							var x = elm$random$Random$peel(seed);
+							var seedN = elm$random$Random$next(seed);
+							if (_Utils_cmp(x, threshhold) < 0) {
+								var $temp$seed = seedN;
+								seed = $temp$seed;
+								continue accountForBias;
+							} else {
+								return _Utils_Tuple2((x % range) + lo, seedN);
+							}
+						}
+					};
+					return accountForBias(seed0);
+				}
+			});
+	});
+var author$project$Main$generateRandomNumber = F2(
+	function (tonePos, i) {
+		return A2(
+			elm$random$Random$generate,
+			author$project$Main$UpdateRandomNumber(tonePos),
+			A2(elm$random$Random$int, 1, i));
+	});
 var elm$json$Json$Encode$string = _Json_wrap;
 var author$project$Main$toot = _Platform_outgoingPort('toot', elm$json$Json$Encode$string);
 var author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
+			case 'GenerateRandomNumber':
+				var i = msg.a;
+				return _Utils_Tuple2(
+					author$project$Main$Initial,
+					elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[
+								A2(author$project$Main$generateRandomNumber, author$project$Main$Left, 10),
+								A2(author$project$Main$generateRandomNumber, author$project$Main$Right, 10)
+							])));
+			case 'UpdateRandomNumber':
+				if (msg.a.$ === 'Left') {
+					var _n1 = msg.a;
+					var t = msg.b;
+					if (model.$ === 'Playing') {
+						var tonePair = model.a;
+						return _Utils_Tuple2(
+							author$project$Main$Playing(
+								A2(author$project$Main$TonePair, t, tonePair.right)),
+							elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							author$project$Main$Playing(
+								A2(author$project$Main$TonePair, t, 1)),
+							elm$core$Platform$Cmd$none);
+					}
+				} else {
+					var _n3 = msg.a;
+					var t = msg.b;
+					if (model.$ === 'Playing') {
+						var tonePair = model.a;
+						return _Utils_Tuple2(
+							author$project$Main$Playing(
+								A2(author$project$Main$TonePair, tonePair.left, t)),
+							elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							author$project$Main$Playing(
+								A2(author$project$Main$TonePair, 1, t)),
+							elm$core$Platform$Cmd$none);
+					}
+				}
 			case 'GotText':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
@@ -4826,15 +5128,26 @@ var author$project$Main$update = F2(
 			case 'ProcessAudio':
 				var string = msg.a;
 				return _Utils_Tuple2(author$project$Main$Initial, elm$core$Platform$Cmd$none);
-			default:
+			case 'SendAudio':
+				var t = msg.a;
 				return _Utils_Tuple2(
 					author$project$Main$Initial,
-					author$project$Main$toot('butt'));
+					author$project$Main$toot(t));
+			default:
+				var v = msg.a;
+				return _Utils_Tuple2(
+					author$project$Main$Initial,
+					author$project$Main$changeGain(v));
 		}
 	});
-var author$project$Main$SendAudio = {$: 'SendAudio'};
-var elm$core$Basics$identity = function (x) {
-	return x;
+var author$project$Main$ChangeGain = function (a) {
+	return {$: 'ChangeGain', a: a};
+};
+var author$project$Main$GenerateRandomNumber = function (a) {
+	return {$: 'GenerateRandomNumber', a: a};
+};
+var author$project$Main$SendAudio = function (a) {
+	return {$: 'SendAudio', a: a};
 };
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
@@ -4852,6 +5165,7 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	}
 };
 var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -4872,20 +5186,96 @@ var elm$html$Html$Events$onClick = function (msg) {
 		elm$json$Json$Decode$succeed(msg));
 };
 var author$project$Main$buttons = A2(
-	elm$html$Html$button,
+	elm$html$Html$div,
+	_List_Nil,
 	_List_fromArray(
 		[
-			elm$html$Html$Events$onClick(author$project$Main$SendAudio)
-		]),
-	_List_fromArray(
-		[
-			elm$html$Html$text('toot?')
+			A2(
+			elm$html$Html$button,
+			_List_fromArray(
+				[
+					elm$html$Html$Events$onClick(
+					author$project$Main$SendAudio('a'))
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('tone 1')
+				])),
+			A2(
+			elm$html$Html$button,
+			_List_fromArray(
+				[
+					elm$html$Html$Events$onClick(
+					author$project$Main$SendAudio('b'))
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('tone 2')
+				])),
+			A2(
+			elm$html$Html$button,
+			_List_fromArray(
+				[
+					elm$html$Html$Events$onClick(
+					author$project$Main$ChangeGain(0.8))
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('loud')
+				])),
+			A2(
+			elm$html$Html$button,
+			_List_fromArray(
+				[
+					elm$html$Html$Events$onClick(
+					author$project$Main$ChangeGain(0.1))
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('soft')
+				])),
+			A2(
+			elm$html$Html$button,
+			_List_fromArray(
+				[
+					elm$html$Html$Events$onClick(
+					author$project$Main$GenerateRandomNumber(12))
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text('next')
+				]))
 		]));
 var elm$html$Html$pre = _VirtualDom_node('pre');
 var author$project$Main$view = function (model) {
 	switch (model.$) {
 		case 'Initial':
 			return author$project$Main$buttons;
+		case 'Playing':
+			var tonePair = model.a;
+			return A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						author$project$Main$buttons,
+						A2(
+						elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								elm$html$Html$text(
+								elm$core$String$fromInt(tonePair.left))
+							])),
+						A2(
+						elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								elm$html$Html$text(
+								elm$core$String$fromInt(tonePair.right))
+							]))
+					]));
 		case 'Failure':
 			return elm$html$Html$text('I was unable to load your book.');
 		case 'Loading':
@@ -4922,7 +5312,6 @@ var elm$core$Basics$never = function (_n0) {
 var elm$core$Task$Perform = function (a) {
 	return {$: 'Perform', a: a};
 };
-var elm$core$Task$succeed = _Scheduler_succeed;
 var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
 var elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
@@ -4993,7 +5382,6 @@ var elm$core$List$map = F2(
 			_List_Nil,
 			xs);
 	});
-var elm$core$Task$andThen = _Scheduler_andThen;
 var elm$core$Task$map = F2(
 	function (func, taskA) {
 		return A2(
@@ -5026,7 +5414,6 @@ var elm$core$Task$sequence = function (tasks) {
 		elm$core$Task$succeed(_List_Nil),
 		tasks);
 };
-var elm$core$Platform$sendToApp = _Platform_sendToApp;
 var elm$core$Task$spawnCmd = F2(
 	function (router, _n0) {
 		var task = _n0.a;

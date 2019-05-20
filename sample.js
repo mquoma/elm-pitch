@@ -27,13 +27,26 @@ OscillatorSample.prototype.play = function() {
   this.oscillator = context.createOscillator();
   this.analyser = context.createAnalyser();
 
+  this.gainNode = context.createGain()
+  this.gainNode.gain.value = 0.1 // 10 %
+  this.gainNode.connect(context.destination)
+
   // Setup the graph.
-  this.oscillator.connect(this.analyser);
-  this.analyser.connect(context.destination);
+  // this.oscillator.connect(this.analyser);
+  // this.analyser.connect(context.destination);
+  this.oscillator.connect(this.gainNode);
+  // this.analyser.connect(context.destination);
 
   this.oscillator[this.oscillator.start ? 'start' : 'noteOn'](0);
 
-  requestAnimFrame(this.visualize.bind(this));
+  //MTQ
+  //requestAnimFrame(this.visualize.bind(this));
+};
+
+OscillatorSample.prototype.changeGain = function(i) {
+  if(!isNaN(i) && i <= 1.0 && i >= 0.0) {
+    this.gainNode.gain.value = i;
+  }
 };
 
 OscillatorSample.prototype.stop = function() {

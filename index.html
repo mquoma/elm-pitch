@@ -14,17 +14,28 @@
 
 var audio = "toot.";
 
-var sample = new OscillatorSample();
+var sampleA = new OscillatorSample();
+var sampleB = new OscillatorSample();
 
 var app = Elm.Main.init({
   node: document.getElementById('elm')
 });
 
 app.ports.audio.send(audio);
+app.ports.changeGain.subscribe( function(data) {
+  sampleA.changeGain(data);
+});
 app.ports.toot.subscribe(function(data) {
-  console.log(data);
-  sample.toggle();
+  if(data == "a") {
+    sampleA.toggle();
+    sampleA.changeFrequency(440);
+  } else if(data == "b"){
+    sampleB.toggle();
+    sampleB.changeFrequency(558);
 
+    sampleA.changeGain(0.8);
+  }
+  // sample2.toggle();
 });
 
 </script>
