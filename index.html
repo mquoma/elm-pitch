@@ -25,16 +25,23 @@ app.ports.audio.send(audio);
 app.ports.changeGain.subscribe( function(data) {
   sampleA.changeGain(data);
 });
-app.ports.toot.subscribe(function(data) {
-  if(data == "a") {
-    sampleA.toggle();
-    sampleA.changeFrequency(440);
-  } else if(data == "b"){
-    sampleB.toggle();
-    sampleB.changeFrequency(558);
+app.ports.sendAudio.subscribe(function([tonePos, f]) {
 
-    sampleA.changeGain(0.8);
-  }
+  console.log(tonePos);
+  console.log(f);
+    if(tonePos == "left") {
+      sampleA.toggle();
+      sampleA.changeFrequency(f);
+
+    } else if (tonePos == "right") {
+      sampleB.toggle();
+      sampleB.changeFrequency(f);
+    }
+
+    // sampleB.toggle();
+    // sampleB.changeFrequency(558);
+    //
+    // sampleA.changeGain(0.8);
   // sample2.toggle();
 });
 

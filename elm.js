@@ -5068,8 +5068,31 @@ var author$project$Main$generateRandomNumber = F2(
 			author$project$Main$UpdateRandomNumber(tonePos),
 			A2(elm$random$Random$int, 1, i));
 	});
+var elm$json$Json$Encode$int = _Json_wrap;
+var elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
 var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$toot = _Platform_outgoingPort('toot', elm$json$Json$Encode$string);
+var author$project$Main$sendAudio = _Platform_outgoingPort(
+	'sendAudio',
+	function ($) {
+		var a = $.a;
+		var b = $.b;
+		return A2(
+			elm$json$Json$Encode$list,
+			elm$core$Basics$identity,
+			_List_fromArray(
+				[
+					elm$json$Json$Encode$string(a),
+					elm$json$Json$Encode$int(b)
+				]));
+	});
 var author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5129,10 +5152,22 @@ var author$project$Main$update = F2(
 				var string = msg.a;
 				return _Utils_Tuple2(author$project$Main$Initial, elm$core$Platform$Cmd$none);
 			case 'SendAudio':
-				var t = msg.a;
-				return _Utils_Tuple2(
-					author$project$Main$Initial,
-					author$project$Main$toot(t));
+				var tonePos = msg.a;
+				if (model.$ === 'Playing') {
+					var tonePair = model.a;
+					return _Utils_Tuple2(
+						author$project$Main$Playing(tonePair),
+						elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									author$project$Main$sendAudio(
+									_Utils_Tuple2('left', tonePair.left * 100)),
+									author$project$Main$sendAudio(
+									_Utils_Tuple2('right', tonePair.right * 100))
+								])));
+				} else {
+					return _Utils_Tuple2(author$project$Main$Initial, elm$core$Platform$Cmd$none);
+				}
 			default:
 				var v = msg.a;
 				return _Utils_Tuple2(
@@ -5195,7 +5230,7 @@ var author$project$Main$buttons = A2(
 			_List_fromArray(
 				[
 					elm$html$Html$Events$onClick(
-					author$project$Main$SendAudio('a'))
+					author$project$Main$SendAudio(author$project$Main$Left))
 				]),
 			_List_fromArray(
 				[
@@ -5206,7 +5241,7 @@ var author$project$Main$buttons = A2(
 			_List_fromArray(
 				[
 					elm$html$Html$Events$onClick(
-					author$project$Main$SendAudio('b'))
+					author$project$Main$SendAudio(author$project$Main$Right))
 				]),
 			_List_fromArray(
 				[
